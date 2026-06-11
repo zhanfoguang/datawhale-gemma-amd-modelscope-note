@@ -1,6 +1,6 @@
 # Datawhale 学习笔记：零基础在 AMD 云平台体验 Gemma 4 模型
 
-> 标签：#datawhale #AMD #魔搭社区 #ModelScope #Gemma #vLLM #大模型
+> 标签：#AMDev #Datawhale #ROCm #AMD #魔搭社区 #ModelScope #Gemma #vLLM #大模型
 
 ## 1. 学习背景
 
