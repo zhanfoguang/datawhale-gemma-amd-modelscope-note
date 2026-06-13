@@ -205,3 +205,120 @@ pip install -U modelscope
 - 对比不同大小模型的速度和效果；
 - 了解 vLLM 的并发和显存优化；
 - 尝试用简单 Web 页面调用本地模型服务。
+
+---
+
+# Datawhale 学习笔记：第2节 使用 AMD GPU 加速 PyTorch 训练
+
+> 标签：#AMDev #Datawhale #ROCm #AMD #PyTorch #Stable Diffusion #GPU
+
+## 1. 学习背景
+
+本次任务是熟悉在 AMD GPU 环境下使用 PyTorch 进行深度学习推理，主要包含三个子任务：
+
+1. **Task 1**: 安装 AMD ROCm 版本的 PyTorch
+2. **Task 2**: 运行 Stable Diffusion 推理
+3. **Task 3**: 测试不同型号的 GPU
+
+相比第一次任务侧重于模型部署，这次更关注 GPU 加速计算环境的搭建和验证。
+
+## 2. 云平台体验流程
+
+### 2.1 进入云端环境
+
+任务提供的是已经配置好的 AMD 云端环境，包含 ROCm 驱动和基础 CUDA/PyTorch 兼容层。进入平台后，主要在 JupyterLab 风格的页面中操作。
+
+### 2.2 安装 AMD ROCm 版本的 PyTorch
+
+按照官方指南安装对应版本的 PyTorch。安装完成后，可以通过以下命令验证是否安装成功：
+
+```bash
+python -c "import torch; print(torch.__version__); print(torch.cuda.is_available())"
+```
+
+如果输出显示 CUDA 可用（即 `True`），说明 PyTorch 已正确识别 AMD GPU。
+
+### 2.3 运行 Stable Diffusion 推理
+
+这一步是验证 PyTorch 环境是否真正可用。需要用 AMD ROCm 支持的 PyTorch 来运行 SD 模型进行推理。
+
+常见的运行方式包括：
+
+```bash
+python SD推理脚本.py
+```
+
+具体的脚本内容和参数可以参考 Datawhale 官方的任务说明。
+
+### 2.4 测试不同型号的 GPU
+
+使用系统命令查看 GPU 信息：
+
+```bash
+rocm-smi
+```
+
+或
+
+```bash
+nvidia-smi  # 在某些环境下可能需要用这个
+```
+
+可以查看 GPU 型号、显存使用情况、温度等信息。
+
+## 3. 踩坑记录
+
+### 3.1 第二步运行 Stable Diffusion 推理时报警告或报错
+
+**问题描述**：
+
+在执行 Stable Diffusion 推理时，经常会报警告或直接报错，提示与 `torchaudio` 相关的错误。
+
+**原因分析**：
+
+`torchaudio` 默认会尝试加载一些音频相关的依赖，这些依赖在 AMD ROCm 环境下可能存在兼容性问题，或者与当前环境的其他依赖产生冲突。
+
+**解决方案**：
+
+在运行推理之前，先在终端执行以下命令：
+
+```bash
+pip uninstall torchaudio
+```
+
+卸载 `torchaudio` 后，再次运行 Stable Diffusion 推理，问题通常就可以解决。
+
+**为什么这样可以解决问题**：
+
+对于纯推理任务来说，`torchaudio` 通常不是必需的。卸载它可以避免一些不必要的依赖冲突，特别是当环境中存在版本不兼容或缺少某些底层库时。
+
+### 3.2 验证 GPU 识别是否正常
+
+如果 `python -c "import torch; print(torch.cuda.is_available())"` 返回 `False`，需要检查：
+
+1. ROCm 驱动是否正确安装
+2. PyTorch 版本是否与 ROCm 兼容
+3. 当前环境是否真的在 AMD GPU 上运行
+
+## 4. 关键概念理解
+
+### 4.1 ROCm
+
+ROCm（Radeon Open Compute Platform）是 AMD 提供的开源计算平台，类似于 NVIDIA 的 CUDA。它允许在 AMD GPU 上运行高性能计算和深度学习任务。
+
+### 4.2 AMD ROCm 版 PyTorch
+
+标准的 PyTorch 是为 NVIDIA GPU 编译的。要在 AMD GPU 上运行，需要安装专门为 ROCm 编译的 PyTorch 版本。
+
+### 4.3 Stable Diffusion 推理
+
+Stable Diffusion 是一个文生图模型。运行它的推理过程，就是用训练好的模型根据输入的文字生成图片。
+
+## 5. 总结
+
+这次任务主要完成了 AMD GPU 环境下的 PyTorch 部署验证，通过运行 Stable Diffusion 推理确认了 GPU 加速是否正常工作。核心踩坑点在于 `torchaudio` 的兼容性问题，解决方案简单有效：直接卸载即可。
+
+对后续学习的启发：
+- 环境问题优先排查依赖冲突
+- 不是所有 PyTorch 生态的包都是必需的
+- 验证环境时用简单的测试命令先确认基础功能
